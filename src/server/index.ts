@@ -5,13 +5,13 @@ import type {
   AdapterSkillSnapshot,
 } from "@paperclipai/adapter-utils";
 import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
-import { icon, iconSvg } from "../icon.js";
+import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
-export { icon, iconSvg };
+export { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 };
 
 export const sessionCodec: AdapterSessionCodec = {
   deserialize(raw: unknown) {
