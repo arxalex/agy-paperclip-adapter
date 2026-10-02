@@ -1,6 +1,8 @@
 import type {
   ServerAdapterModule,
   AdapterSessionCodec,
+  AdapterSkillContext,
+  AdapterSkillSnapshot,
 } from "@paperclipai/adapter-utils";
 import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { icon, iconSvg } from "../icon.js";
@@ -35,7 +37,7 @@ Adapter: antigravity
 Use when:
 - You want Paperclip to orchestrate Google Antigravity (agy) local CLI agents.
 - You want model selection across Gemini 3.8 Flash, Gemini 3.7 Flash, Gemini 3.6 Flash, Gemini 3.1 Pro, Claude Sonnet/Opus, or GPT-OSS models.
-- You want to hire multiple local agents with individual instructions and Paperclip skills.
+- You want to hire multiple local agents with individual instructions and configurable Paperclip skills.
 - You want persistent conversation session state across heartbeats.
 
 Core fields:
@@ -110,9 +112,41 @@ export function createServerAdapter(): ServerAdapterModule {
     models,
     agentConfigurationDoc,
     getConfigSchema,
-    supportsSkills: true,
+    requiresMaterializedRuntimeSkills: true,
     supportsInstructionsBundle: true,
     instructionsPathKey: "instructionsFilePath",
     supportsLocalAgentJwt: true,
-  } as ServerAdapterModule;
+    acp: {
+      agentId: "custom",
+      skillsMode: "ephemeral",
+      prerequisites: {},
+    },
+    async listSkills(ctx: AdapterSkillContext): Promise<AdapterSkillSnapshot> {
+      return {
+        adapterType: ctx.adapterType,
+        supported: true,
+        mode: "ephemeral",
+        desiredSkills: [],
+        entries: [],
+        warnings: [],
+      };
+    },
+    async syncSkills(ctx: AdapterSkillContext, desiredSkills: string[]): Promise<AdapterSkillSnapshot> {
+      return {
+        adapterType: ctx.adapterType,
+        supported: true,
+        mode: "ephemeral",
+        desiredSkills,
+        entries: desiredSkills.map((key) => ({
+          key,
+          runtimeName: key,
+          desired: true,
+          managed: true,
+          state: "installed",
+          locationLabel: `.agents/skills/${key}`,
+        })),
+        warnings: [],
+      };
+    },
+  };
 }

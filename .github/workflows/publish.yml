@@ -1,6 +1,12 @@
 name: Publish to npm
 
 on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'package.json'
   release:
     types: [published]
   workflow_dispatch:
