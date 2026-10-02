@@ -1,18 +1,39 @@
 {
   "name": "agy-paperclip-adapter",
   "version": "1.0.0",
-  "description": "Antigravity (agy) adapter for Paperclip",
+  "description": "Google Antigravity (agy) local agent adapter for Paperclip",
   "type": "module",
   "license": "MIT",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "keywords": [
+    "paperclip",
+    "paperclip-adapter",
+    "antigravity",
+    "agy",
+    "ai-agent",
+    "gemini"
+  ],
   "paperclip": {
     "adapterUiParser": "1.0.0"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./server": "./dist/server/index.js",
-    "./ui-parser": "./dist/ui-parser.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./ui-parser": {
+      "types": "./dist/ui-parser.d.ts",
+      "import": "./dist/ui-parser.js",
+      "default": "./dist/ui-parser.js"
+    }
   },
   "files": [
     "dist",
@@ -21,7 +42,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist *.tgz",
-    "pack": "npm run clean && npm run build && npm pack --pack-destination=dist"
+    "pack": "npm run clean && npm run build && npm pack --pack-destination=dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
     "@paperclipai/adapter-utils": "^2026.325.0",
