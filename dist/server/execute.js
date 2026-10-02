@@ -67,21 +67,21 @@ export async function execute(ctx) {
             // Ignore missing instructions file
         }
     }
-    // Build agy arguments
-    const args = ["--print", "--dangerously-skip-permissions"];
+    // Build agy arguments: put all options first, and attach prompt to --print
+    const args = ["--dangerously-skip-permissions"];
     if (model && model !== "auto") {
-        args.push("--model", model);
+        args.push(`--model=${model}`);
     }
     if (effort) {
-        args.push("--effort", effort);
+        args.push(`--effort=${effort}`);
     }
     if (mode) {
-        args.push("--mode", mode);
+        args.push(`--mode=${mode}`);
     }
     if (prevConversationId) {
-        args.push("--conversation", prevConversationId);
+        args.push(`--conversation=${prevConversationId}`);
     }
-    args.push(promptText);
+    args.push(`--print=${promptText}`);
     await onLog("stdout", `[antigravity] Starting agy session (model: ${model}, conversation: ${conversationId})...\n`);
     try {
         const processResult = await runChildProcess(runId, command, args, {
