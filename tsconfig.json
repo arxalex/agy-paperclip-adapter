@@ -9,11 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"],
-    "paths": {
-      "@paperclipai/adapter-utils": ["/opt/paperclip-ai/packages/adapter-utils/dist/index.d.ts"],
-      "@paperclipai/adapter-utils/*": ["/opt/paperclip-ai/packages/adapter-utils/dist/*.d.ts"]
-    }
+    "types": ["node"]
   },
   "include": ["src"]
 }

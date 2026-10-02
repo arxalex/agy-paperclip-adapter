@@ -3,11 +3,13 @@ import type {
   AdapterSessionCodec,
 } from "@paperclipai/adapter-utils";
 import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
+import { icon, iconSvg } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
+export { icon, iconSvg };
 
 export const sessionCodec: AdapterSessionCodec = {
   deserialize(raw: unknown) {
@@ -26,13 +28,14 @@ export const sessionCodec: AdapterSessionCodec = {
   },
 };
 
-export const agentConfigurationDoc = `# antigravity agent configuration
+export const agentConfigurationDoc = `# Antigravity Agent Configuration
 
 Adapter: antigravity
 
 Use when:
-- You want Paperclip to orchestrate Google Antigravity (agy) agents.
-- You want to use Gemini 3.8 Flash, Gemini 3.7 Flash, Claude Sonnet, or GPT-OSS models via Antigravity.
+- You want Paperclip to orchestrate Google Antigravity (agy) local CLI agents.
+- You want model selection across Gemini 3.8 Flash, Gemini 3.7 Flash, Gemini 3.6 Flash, Gemini 3.1 Pro, Claude Sonnet/Opus, or GPT-OSS models.
+- You want to hire multiple local agents with individual instructions and Paperclip skills.
 - You want persistent conversation session state across heartbeats.
 
 Core fields:
@@ -67,7 +70,7 @@ export function getConfigSchema() {
           { value: "high", label: "High" },
           { value: "max", label: "Max" },
         ],
-        hint: "Reasoning effort level for models that support thinking.",
+        hint: "Reasoning effort level for thinking models.",
       },
       {
         key: "mode",
@@ -107,8 +110,9 @@ export function createServerAdapter(): ServerAdapterModule {
     models,
     agentConfigurationDoc,
     getConfigSchema,
+    supportsSkills: true,
     supportsInstructionsBundle: true,
     instructionsPathKey: "instructionsFilePath",
     supportsLocalAgentJwt: true,
-  };
+  } as ServerAdapterModule;
 }

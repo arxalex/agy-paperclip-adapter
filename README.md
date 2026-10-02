@@ -1,34 +1,43 @@
 # Antigravity Paperclip Adapter (`agy-paperclip-adapter`)
 
-An external adapter plugin for [Paperclip](https://github.com/paperclipai/paperclip) that integrates the Google Antigravity (`agy`) CLI agent runtime.
+An external adapter plugin for [Paperclip](https://github.com/paperclipai/paperclip) that integrates the Google Antigravity (`agy`) local CLI agent runtime.
 
 ## Features
 
-- **Full Model Support**: Supports all Antigravity models (`gemini-3.8-flash-high`, `gemini-3.7-flash-high`, `gemini-3.1-pro-high`, `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium`, `auto`).
-- **Session Continuity**: Retains `--conversation` state across Paperclip heartbeat runs.
-- **Configurable Reasoning Effort**: Low, Medium, High, and Max thinking modes.
-- **Declarative Schema**: Exposes models and settings directly in Paperclip's web UI.
-- **UI Transcript Parser**: Native streaming output parser for tool calls, reasoning steps, and assistant text.
+- **Full Model Selection**: Supports all Antigravity models (`gemini-3.8-flash-high`, `gemini-3.7-flash-high`, `gemini-3.6-flash-high`, `gemini-3.1-pro-high`, `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium`, `auto`).
+- **Adapter Icon**: Includes native SVG branding icon for Paperclip's UI.
+- **Paperclip Skills to AGY Sync**: Automatically materializes skills assigned in Paperclip into `${workspace}/.agents/skills/<skill-name>/SKILL.md` for AGY agent discovery.
+- **Multi-Agent Isolation**: Allows hiring multiple agents with distinct roles, instructions, and skills on a single local `agy` runtime via isolated conversation sessions (`--conversation`) and working directories.
+- **UI Transcript Parser**: Self-contained streaming parser for tool calls, thinking steps, system logs, and assistant markdown output.
+- **Package Import Ready (`npm run pack`)**: Easily build and package into `dist/agy-paperclip-adapter-1.0.0.tgz` for importing via Paperclip UI or CLI.
+
+## Quick Start & Packing
+
+To build and generate the importable tarball in `dist/`:
+
+```bash
+npm run pack
+# Output: dist/agy-paperclip-adapter-1.0.0.tgz
+```
 
 ## Installation into Paperclip
 
-Install as a local adapter plugin:
+### Option 1: Via UI (Custom Adapter Import)
+Upload `dist/agy-paperclip-adapter-1.0.0.tgz` in the Paperclip UI under **Settings → Adapters → Install Custom Adapter**.
 
+### Option 2: Via Paperclip CLI
 ```bash
-paperclipai adapter install --payload-json '{"packageName":"/root/agy-paperclip-adapter","isLocalPath":true}'
+paperclipai adapter install --payload-json "{\"packageName\":\"$PWD/dist/agy-paperclip-adapter-1.0.0.tgz\"}"
 ```
 
-Or via API:
-
+### Option 3: Local Symlink Development
 ```bash
-curl -X POST http://localhost:3100/api/adapters/install \
+curl -X POST http://localhost:3100/api/adapters \
   -H "Authorization: Bearer <PAPERCLIP_API_KEY>" \
   -H "Content-Type: application/json" \
-  -d '{"packageName":"/root/agy-paperclip-adapter","isLocalPath":true}'
+  -d "{\"localPath\":\"$PWD\"}"
 ```
 
-## Build
+## License
 
-```bash
-npm run build
-```
+MIT

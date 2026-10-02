@@ -42,7 +42,7 @@ export async function testEnvironment(
     });
   }
 
-  const hasError = checks.some((c) => c.level === "error");
+  const hasError = checks.some((c: AdapterEnvironmentTestResult["checks"][number]) => c.level === "error");
 
   return {
     adapterType: ctx.adapterType,

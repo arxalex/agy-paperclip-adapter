@@ -4,6 +4,8 @@
   "description": "Antigravity (agy) adapter for Paperclip",
   "type": "module",
   "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "paperclip": {
     "adapterUiParser": "1.0.0"
   },
@@ -13,18 +15,20 @@
     "./ui-parser": "./dist/ui-parser.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
-    "build": "/opt/paperclip-ai/node_modules/.bin/tsc",
-    "clean": "rm -rf dist"
+    "build": "tsc",
+    "clean": "rm -rf dist *.tgz",
+    "pack": "npm run clean && npm run build && npm pack --pack-destination=dist"
   },
   "dependencies": {
-    "@paperclipai/adapter-utils": "file:/opt/paperclip-ai/packages/adapter-utils",
+    "@paperclipai/adapter-utils": "^2026.325.0",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "typescript": "^7.0.2"
+    "typescript": "^5.7.0"
   }
 }
