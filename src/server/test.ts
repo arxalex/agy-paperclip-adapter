@@ -7,7 +7,7 @@ import type {
 
 import os from "node:os";
 import path from "node:path";
-import { resolveAccountHome, LOGIN_HINT } from "./account.js";
+import { resolveAccountHome, buildLoginInstruction, buildTerminalLoginCommand } from "./account.js";
 import { startLogin, submitLoginCode } from "./login.js";
 
 const execFileAsync = promisify(execFile);
@@ -37,7 +37,6 @@ export async function testEnvironment(
   const authCode = typeof ctx.config.authCode === "string" ? ctx.config.authCode.trim() : "";
 
   if (accountHome) {
-    // Isolated account: run the OAuth login flow inside this (already running) server process.
     let handled = false;
     if (authCode) {
       const submitted = await submitLoginCode(accountHome, authCode);
@@ -55,11 +54,10 @@ export async function testEnvironment(
           level: "error",
           message: "Authorization code was rejected or expired.",
           detail: submitted.output?.slice(0, 500) ?? null,
-          hint: "Click Test environment again to get a fresh login URL.",
-          code: "agy_login_rejected",
+          hint: buildLoginInstruction(ctx.config.accountName, command),
+          code: "adapter_auth_missing",
         });
       }
-      // reason === "no_pending": fall through and start a fresh login below.
     }
     if (!handled) {
       const started = await startLogin(command, env, accountHome);
@@ -71,10 +69,11 @@ export async function testEnvironment(
         });
       } else if (started.state === "needs_code") {
         checks.push({
-          level: "error",
-          message: `Not logged in. Open this URL, authorize, and copy the code: ${started.url}`,
-          hint: LOGIN_HINT,
-          code: "agy_login_required",
+          level: "warn",
+          message: "Antigravity CLI is installed, but login is required.",
+          detail: `OAuth URL: ${started.url}`,
+          hint: buildLoginInstruction(ctx.config.accountName, command),
+          code: "adapter_auth_missing",
         });
       } else {
         checks.push({
@@ -95,10 +94,10 @@ export async function testEnvironment(
       const output = stdout.trim();
       if (/Authentication required/i.test(output)) {
         checks.push({
-          level: "error",
-          message: "Antigravity CLI is not logged in.",
-          hint: "Run `agy` once to log in, or set an Account name for an isolated login.",
-          code: "agy_not_authenticated",
+          level: "warn",
+          message: "Antigravity CLI is installed, but login is required.",
+          hint: buildLoginInstruction(ctx.config.accountName, command),
+          code: "adapter_auth_missing",
         });
       } else {
         checks.push({
@@ -111,10 +110,10 @@ export async function testEnvironment(
       const partial = String((err as { stdout?: unknown })?.stdout ?? "");
       if (/Authentication required/i.test(partial)) {
         checks.push({
-          level: "error",
-          message: "Antigravity CLI is not logged in.",
-          hint: "Run `agy` once to log in, or set an Account name for an isolated login.",
-          code: "agy_not_authenticated",
+          level: "warn",
+          message: "Antigravity CLI is installed, but login is required.",
+          hint: buildLoginInstruction(ctx.config.accountName, command),
+          code: "adapter_auth_missing",
         });
       } else {
         checks.push({

@@ -1,24 +1,25 @@
 import os from "node:os";
 import path from "node:path";
+import { resolvePaperclipInstanceRootForAdapter } from "@paperclipai/adapter-utils/server-utils";
 
-export const ACCOUNTS_ROOT_DIR = path.join(".paperclip", "agy-accounts");
-
-export const LOGIN_HINT =
-  'Open Test environment on the agent config page: it shows the Google login URL. Authorize, paste the code into "Auth code", and click Test environment again.';
-
-/**
- * Resolves the isolated HOME directory for an agy account.
- * `agy` keeps its credentials/state under $HOME (~/.gemini/antigravity-cli),
- * so a separate HOME == a separate Google account + separate context.
- *
- * `accountName` may be a plain name (-> ~/.paperclip/agy-accounts/<name>)
- * or an absolute path. Returns null when no isolation is configured.
- */
 export function resolveAccountHome(accountName: unknown): string | null {
   if (typeof accountName !== "string") return null;
   const trimmed = accountName.trim();
   if (!trimmed) return null;
   if (path.isAbsolute(trimmed)) return path.normalize(trimmed);
   const safeName = trimmed.replace(/[^a-zA-Z0-9._-]/g, "-");
-  return path.join(os.homedir(), ACCOUNTS_ROOT_DIR, safeName);
+  const instanceRoot = resolvePaperclipInstanceRootForAdapter();
+  return path.join(instanceRoot, "ai-local-logins", safeName);
 }
+
+export function buildTerminalLoginCommand(accountName: unknown, command = "agy"): string {
+  const accountHome = resolveAccountHome(accountName) ?? (process.env.HOME || os.homedir() || "/root");
+  return `(export HOME='${accountHome}' && mkdir -p "$HOME" && ${command})`;
+}
+
+export function buildLoginInstruction(accountName: unknown, command = "agy"): string {
+  const cmd = buildTerminalLoginCommand(accountName, command);
+  return `Sign in to Antigravity for this connection on the machine running Paperclip. Your existing terminal login stays separate. Run this in a terminal on that machine and finish signing in in your browser. We'll check automatically when you return: ${cmd}`;
+}
+
+

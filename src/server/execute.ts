@@ -20,7 +20,7 @@ import { DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { syncSkillsToWorkspace, type SkillItem, type SkillFile } from "./skills-sync.js";
 import os from "node:os";
 import path from "node:path";
-import { resolveAccountHome, LOGIN_HINT } from "./account.js";
+import { resolveAccountHome, buildLoginInstruction } from "./account.js";
 
 function parseSkills(raw: unknown): SkillItem[] {
   if (!Array.isArray(raw)) return [];
@@ -283,7 +283,7 @@ export async function execute(
     if (authRequired) {
       await onLog(
         "stderr",
-        `[antigravity] agy is not logged in${accountHome ? ` for account "${String(config.accountName)}"` : ""}. ${accountHome ? LOGIN_HINT : "Run agy once to log in."}\n`,
+        `[antigravity] agy is not logged in${accountHome ? ` for account "${String(config.accountName)}"` : ""}. ${buildLoginInstruction(config.accountName, command)}\n`,
       );
     }
 

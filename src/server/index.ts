@@ -8,7 +8,7 @@ import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
-import { LOGIN_HINT } from "./account.js";
+import { buildLoginInstruction } from "./account.js";
 import { loginCapability } from "./login-capability.js";
 
 export const type = "antigravity";
@@ -50,8 +50,8 @@ Core fields:
 - cwd (string, optional): Working directory fallback.
 - instructionsFilePath (string, optional): Path to instructions markdown file (e.g. AGENTS.md).
 - timeoutSec (number, optional): Execution timeout in seconds (default: 600).
-- accountName (string, optional): Isolated agy account. Runs agy with a separate HOME (~/.paperclip/agy-accounts/<name>, or an absolute path) so each agent can use its own Google login and its own ~/.gemini/antigravity-cli context.
-- authCode (string, optional): One-time Google OAuth code used to log in the isolated account. ${LOGIN_HINT}
+- accountName (string, optional): Isolated agy account. Runs agy with a separate HOME (<instanceRoot>/ai-local-logins/<name>, or an absolute path) so each agent can use its own Google login and its own ~/.gemini/antigravity-cli context.
+- authCode (string, optional): Optional OAuth authorization code from Google login URL.
 `;
 
 export function getConfigSchema() {
@@ -107,13 +107,13 @@ export function getConfigSchema() {
         key: "accountName",
         label: "Account name (isolated agy login)",
         type: "text" as const,
-        hint: "Optional. Separate agy account/context for this agent (stored in ~/.paperclip/agy-accounts/<name>). Empty = system default login.",
+        hint: "Optional. Separate agy account/context for this agent (stored in <instanceRoot>/ai-local-logins/<name>). Empty = system default login.",
       },
       {
         key: "authCode",
         label: "Auth code (agy login)",
         type: "text" as const,
-        hint: LOGIN_HINT,
+        hint: "Optional one-time OAuth code if completing login via Test environment.",
       },
     ],
   };
