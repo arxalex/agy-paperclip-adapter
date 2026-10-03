@@ -20,7 +20,7 @@ import { DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { syncSkillsToWorkspace, type SkillItem, type SkillFile } from "./skills-sync.js";
 import os from "node:os";
 import path from "node:path";
-import { resolveAccountHome, buildLoginInstruction } from "./account.js";
+import { resolveIsolatedAgentHome, buildLoginInstruction } from "./account.js";
 
 function parseSkills(raw: unknown): SkillItem[] {
   if (!Array.isArray(raw)) return [];
@@ -136,11 +136,18 @@ export async function execute(
   const skillsList = parseSkills(context.skills);
   const syncedSkills = await syncSkillsToWorkspace(effectiveCwd, skillsList);
 
-  const realHome = process.env.HOME || os.homedir() || "/root";
-  const useIsolatedAccount = config.useIsolatedAccount !== false;
-  const rawSessionId = config.accountName ?? config.storedSessionId ?? config.sessionId ?? agent.id;
-  const sessionId = typeof rawSessionId === "string" ? rawSessionId.trim() : "";
-  const accountHome = (useIsolatedAccount && sessionId) ? resolveAccountHome(sessionId) : null;
+  if (!agent?.id || !agent.id.trim()) {
+    throw new Error("agent.id is required for execution");
+  }
+
+  const realHome = process.env.HOME || os.homedir();
+  if (!realHome) {
+    throw new Error("Unable to determine user HOME directory for execution");
+  }
+
+  const useIsolatedAccount = Boolean(config.useIsolatedAccount);
+  const agentId = agent.id.trim();
+  const accountHome = useIsolatedAccount ? resolveIsolatedAgentHome(agentId) : null;
   if (accountHome) {
     try {
       await fs.mkdir(accountHome, { recursive: true });
@@ -154,7 +161,7 @@ export async function execute(
     ...process.env,
     ...paperclipEnv,
     HOME: accountHome ?? realHome,
-    PATH: `${path.join(realHome, ".local", "bin")}:/root/.local/bin:${process.env.PATH ?? ""}`,
+    PATH: `${path.join(realHome, ".local", "bin")}:${process.env.PATH ?? ""}`,
     PAPERCLIP_RUN_ID: runId,
   };
 
@@ -242,7 +249,7 @@ export async function execute(
     );
   }
   if (accountHome) {
-    await onLog("stdout", `[antigravity] Using isolated agy account "${String(config.accountName)}" (HOME=${accountHome})\n`);
+    await onLog("stdout", `[antigravity] Using isolated agy account "${agentId}" (HOME=${accountHome})\n`);
   }
 
   const args: string[] = ["--dangerously-skip-permissions"];
@@ -286,7 +293,7 @@ export async function execute(
     if (authRequired) {
       await onLog(
         "stderr",
-        `[antigravity] agy is not logged in${sessionId ? ` for account "${sessionId}"` : ""}. ${buildLoginInstruction(sessionId || "<UUID>", command)}\n`,
+        `[antigravity] agy is not logged in${accountHome ? ` for account "${agentId}"` : ""}. ${buildLoginInstruction(agentId, command)}\n`,
       );
     }
 

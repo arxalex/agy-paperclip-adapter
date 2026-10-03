@@ -9,4 +9,8 @@ export {
   createServerAdapter,
   sessionCodec,
   getConfigSchema,
+  extractAgentIdFromText,
+  resolveIsolatedAgentHome,
+  buildTerminalLoginCommand,
+  buildLoginInstruction,
 } from "./server/index.js";

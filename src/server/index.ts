@@ -3,16 +3,18 @@ import type {
   AdapterSessionCodec,
   AdapterSkillContext,
   AdapterSkillSnapshot,
+  AdapterConfigSchema,
 } from "@paperclipai/adapter-utils";
 import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
-import { buildTerminalLoginCommand } from "./account.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
 export { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 };
+export * from "./account.js";
+import { extractAgentIdFromText, buildTerminalLoginCommand } from "./account.js";
 
 export const sessionCodec: AdapterSessionCodec = {
   deserialize(raw: unknown) {
@@ -48,14 +50,22 @@ Core fields:
 - command (string, optional): agy binary command path (defaults to "agy").
 - cwd (string, optional): Working directory fallback.
 - instructionsFilePath (string, optional): Path to instructions markdown file (e.g. AGENTS.md).
-- timeoutSec (number, optional): Execution timeout in seconds (default: 600).
-- accountName (string, optional): Isolated agy account. Runs agy with a separate HOME (<instanceRoot>/ai-local-logins/<name>, or an absolute path) so each agent can use its own Google login and its own ~/.gemini/antigravity-cli context.
-- authCode (string, optional): Optional OAuth authorization code from Google login URL.
+- useIsolatedAccount (boolean, optional): When enabled, runs agy with an isolated agent HOME (<instanceRoot>/ai-local-logins/<agent-id>) so each agent has its own Google login.
 `;
 
-export function getConfigSchema(ctx?: { agentId?: string } | AdapterSkillContext) {
-  const agentId = (ctx && "agentId" in ctx && typeof ctx.agentId === "string" && ctx.agentId) ? ctx.agentId : "<agent-id>";
-  const loginCmd = buildTerminalLoginCommand(agentId);
+function getBrowserAgentId(): string | null {
+  if (typeof document !== "undefined" && document.body?.innerHTML) {
+    return extractAgentIdFromText(document.body.innerHTML);
+  }
+  return null;
+}
+
+export function getConfigSchema(): AdapterConfigSchema {
+  const agentId = getBrowserAgentId();
+  const isolatedHint = agentId
+    ? `When enabled, uses a separate Google login in ai-local-logins/${agentId}. Run in terminal on the Paperclip host: ${buildTerminalLoginCommand(agentId)}`
+    : "When enabled, uses a separate Google login in ai-local-logins/<agent-id>. When disabled, uses the system default Google login.";
+
   return {
     fields: [
       {
@@ -108,8 +118,8 @@ export function getConfigSchema(ctx?: { agentId?: string } | AdapterSkillContext
         key: "useIsolatedAccount",
         label: "Use separate AI local account",
         type: "toggle" as const,
-        default: true,
-        hint: `When enabled, uses a separate Google login in ai-local-logins/${agentId}. Run in terminal on the Paperclip host to log in: ${loginCmd}. If disabled, uses system default Google login.`,
+        default: false,
+        hint: isolatedHint,
       },
     ],
   };
