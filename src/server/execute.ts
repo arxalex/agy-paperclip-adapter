@@ -137,7 +137,10 @@ export async function execute(
   const syncedSkills = await syncSkillsToWorkspace(effectiveCwd, skillsList);
 
   const realHome = process.env.HOME || os.homedir() || "/root";
-  const accountHome = resolveAccountHome(config.accountName);
+  const useIsolatedAccount = config.useIsolatedAccount !== false;
+  const rawSessionId = config.accountName ?? config.storedSessionId ?? config.sessionId ?? agent.id;
+  const sessionId = typeof rawSessionId === "string" ? rawSessionId.trim() : "";
+  const accountHome = (useIsolatedAccount && sessionId) ? resolveAccountHome(sessionId) : null;
   if (accountHome) {
     try {
       await fs.mkdir(accountHome, { recursive: true });
@@ -283,7 +286,7 @@ export async function execute(
     if (authRequired) {
       await onLog(
         "stderr",
-        `[antigravity] agy is not logged in${accountHome ? ` for account "${String(config.accountName)}"` : ""}. ${buildLoginInstruction(config.accountName, command)}\n`,
+        `[antigravity] agy is not logged in${sessionId ? ` for account "${sessionId}"` : ""}. ${buildLoginInstruction(sessionId || "<UUID>", command)}\n`,
       );
     }
 

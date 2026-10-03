@@ -8,8 +8,7 @@ import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
-import { buildLoginInstruction } from "./account.js";
-import { loginCapability } from "./login-capability.js";
+import { buildTerminalLoginCommand } from "./account.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
@@ -54,7 +53,9 @@ Core fields:
 - authCode (string, optional): Optional OAuth authorization code from Google login URL.
 `;
 
-export function getConfigSchema() {
+export function getConfigSchema(ctx?: { agentId?: string } | AdapterSkillContext) {
+  const agentId = (ctx && "agentId" in ctx && typeof ctx.agentId === "string" && ctx.agentId) ? ctx.agentId : "<agent-id>";
+  const loginCmd = buildTerminalLoginCommand(agentId);
   return {
     fields: [
       {
@@ -104,16 +105,11 @@ export function getConfigSchema() {
         hint: "Execution timeout in seconds.",
       },
       {
-        key: "accountName",
-        label: "Account name (isolated agy login)",
-        type: "text" as const,
-        hint: "Optional. Separate agy account/context for this agent (stored in <instanceRoot>/ai-local-logins/<name>). Empty = system default login.",
-      },
-      {
-        key: "authCode",
-        label: "Auth code (agy login)",
-        type: "text" as const,
-        hint: "Optional one-time OAuth code if completing login via Test environment.",
+        key: "useIsolatedAccount",
+        label: "Use separate AI local account",
+        type: "toggle" as const,
+        default: true,
+        hint: `When enabled, uses a separate Google login in ai-local-logins/${agentId}. Run in terminal on the Paperclip host to log in: ${loginCmd}. If disabled, uses system default Google login.`,
       },
     ],
   };
@@ -165,7 +161,6 @@ export function createServerAdapter(): ServerAdapterModule {
     supportsInstructionsBundle: true,
     instructionsPathKey: "instructionsFilePath",
     supportsLocalAgentJwt: true,
-    loginCapability,
     acp: {
       agentId: "custom",
       skillsMode: "ephemeral",
