@@ -13,7 +13,12 @@ import { testEnvironment } from "./test.js";
 export const type = "antigravity";
 export const label = "Antigravity";
 export { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 };
-export * from "./account.js";
+export {
+  extractAgentIdFromText,
+  resolveIsolatedAgentHome,
+  buildTerminalLoginCommand,
+  buildLoginInstruction,
+} from "./account.js";
 import { extractAgentIdFromText, buildTerminalLoginCommand } from "./account.js";
 
 export const sessionCodec: AdapterSessionCodec = {
