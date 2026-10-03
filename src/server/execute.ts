@@ -18,6 +18,9 @@ import {
 } from "@paperclipai/adapter-utils/server-utils";
 import { DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { syncSkillsToWorkspace, type SkillItem, type SkillFile } from "./skills-sync.js";
+import os from "node:os";
+import path from "node:path";
+import { resolveAccountHome, LOGIN_HINT } from "./account.js";
 
 function parseSkills(raw: unknown): SkillItem[] {
   if (!Array.isArray(raw)) return [];
@@ -133,12 +136,22 @@ export async function execute(
   const skillsList = parseSkills(context.skills);
   const syncedSkills = await syncSkillsToWorkspace(effectiveCwd, skillsList);
 
+  const realHome = process.env.HOME || os.homedir() || "/root";
+  const accountHome = resolveAccountHome(config.accountName);
+  if (accountHome) {
+    try {
+      await fs.mkdir(accountHome, { recursive: true });
+    } catch {
+      // Ignore directory creation error
+    }
+  }
+
   const paperclipEnv = buildPaperclipEnv(agent);
   const env: Record<string, string> = {
     ...process.env,
     ...paperclipEnv,
-    HOME: process.env.HOME || "/root",
-    PATH: `/root/.local/bin:${process.env.PATH ?? ""}`,
+    HOME: accountHome ?? realHome,
+    PATH: `${path.join(realHome, ".local", "bin")}:/root/.local/bin:${process.env.PATH ?? ""}`,
     PAPERCLIP_RUN_ID: runId,
   };
 
@@ -225,6 +238,9 @@ export async function execute(
       `[antigravity] Synchronized ${syncedSkills.length} skill(s) for agent "${agent.name}": ${syncedSkills.join(", ")}\n`,
     );
   }
+  if (accountHome) {
+    await onLog("stdout", `[antigravity] Using isolated agy account "${String(config.accountName)}" (HOME=${accountHome})\n`);
+  }
 
   const args: string[] = ["--dangerously-skip-permissions"];
 
@@ -260,6 +276,16 @@ export async function execute(
       },
       onSpawn: ctx.onSpawn,
     });
+
+    const authRequired =
+      /Authentication required/i.test(processResult.stdout ?? "") ||
+      /Authentication required/i.test(processResult.stderr ?? "");
+    if (authRequired) {
+      await onLog(
+        "stderr",
+        `[antigravity] agy is not logged in${accountHome ? ` for account "${String(config.accountName)}"` : ""}. ${accountHome ? LOGIN_HINT : "Run agy once to log in."}\n`,
+      );
+    }
 
     const isSuccess = processResult.exitCode === 0;
 
