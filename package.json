@@ -1,6 +1,6 @@
 {
   "name": "agy-paperclip-adapter",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Google Antigravity (agy) local agent adapter for Paperclip",
   "type": "module",
   "license": "MIT",
@@ -45,6 +45,10 @@
     "pack": "npm run clean && npm run build && npm pack --pack-destination=dist",
     "prepublishOnly": "npm run clean && npm run build"
   },
+  "bundleDependencies": [
+    "@paperclipai/adapter-utils",
+    "picocolors"
+  ],
   "dependencies": {
     "@paperclipai/adapter-utils": "^2026.1001.0",
     "picocolors": "^1.1.1"

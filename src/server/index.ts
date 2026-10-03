@@ -14,12 +14,10 @@ export const type = "antigravity";
 export const label = "Antigravity";
 export { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 };
 export {
-  extractAgentIdFromText,
   resolveIsolatedAgentHome,
   buildTerminalLoginCommand,
   buildLoginInstruction,
 } from "./account.js";
-import { extractAgentIdFromText, buildTerminalLoginCommand } from "./account.js";
 
 export const sessionCodec: AdapterSessionCodec = {
   deserialize(raw: unknown) {
@@ -55,22 +53,10 @@ Core fields:
 - command (string, optional): agy binary command path (defaults to "agy").
 - cwd (string, optional): Working directory fallback.
 - instructionsFilePath (string, optional): Path to instructions markdown file (e.g. AGENTS.md).
-- useIsolatedAccount (boolean, optional): When enabled, runs agy with an isolated agent HOME (<instanceRoot>/ai-local-logins/<agent-id>) so each agent has its own Google login.
+- useIsolatedAccount (boolean, optional): When enabled, runs agy with an isolated agent HOME (~/.paperclip/ai-local-logins/<agent-id>) so each agent has its own Google login.
 `;
 
-function getBrowserAgentId(): string | null {
-  if (typeof document !== "undefined" && document.body?.innerHTML) {
-    return extractAgentIdFromText(document.body.innerHTML);
-  }
-  return null;
-}
-
 export function getConfigSchema(): AdapterConfigSchema {
-  const agentId = getBrowserAgentId();
-  const isolatedHint = agentId
-    ? `When enabled, uses a separate Google login in ai-local-logins/${agentId}. Run in terminal on the Paperclip host: ${buildTerminalLoginCommand(agentId)}`
-    : "When enabled, uses a separate Google login in ai-local-logins/<agent-id>. When disabled, uses the system default Google login.";
-
   return {
     fields: [
       {
@@ -124,7 +110,12 @@ export function getConfigSchema(): AdapterConfigSchema {
         label: "Use separate AI local account",
         type: "toggle" as const,
         default: false,
-        hint: isolatedHint,
+        hint: `When enabled, runs agy with an isolated agent HOME (ai-local-logins/<agent-id>) so each agent has its own Google login.
+
+Run in terminal on the Paperclip host to log in:
+(export HOME=~/.paperclip/ai-local-logins/<agent-id> && mkdir -p "$HOME" && agy)
+
+When disabled, uses the system default Google login.`,
       },
     ],
   };

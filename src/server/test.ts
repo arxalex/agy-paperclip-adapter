@@ -4,10 +4,8 @@ import type {
   AdapterEnvironmentTestContext,
   AdapterEnvironmentTestResult,
 } from "@paperclipai/adapter-utils";
-
 import os from "node:os";
 import path from "node:path";
-import { buildTerminalLoginCommand, resolveIsolatedAgentHome, extractAgentIdFromText } from "./account.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -15,50 +13,12 @@ export async function testEnvironment(
   ctx: AdapterEnvironmentTestContext,
 ): Promise<AdapterEnvironmentTestResult> {
   const command = String(ctx.config.command ?? "agy");
-  const useIsolatedAccount = Boolean(ctx.config.useIsolatedAccount);
-  const ctxAgentId =
-    (typeof ctx.config.agentId === "string" && ctx.config.agentId.trim()) ||
-    (typeof document !== "undefined" && document.body?.innerHTML) ||
-    "";
-
-  const agentId = typeof ctxAgentId === "string" ? extractAgentIdFromText(ctxAgentId) ?? ctxAgentId.trim() : "";
-
   const checks: AdapterEnvironmentTestResult["checks"] = [];
 
-  if (!agentId) {
-    checks.push({
-      level: "error",
-      message: "agentId is required for testEnvironment.",
-      code: "missing_agent_id",
-    });
-    return {
-      adapterType: ctx.adapterType,
-      status: "fail",
-      checks,
-      testedAt: new Date().toISOString(),
-    };
-  }
-
   const realHome = process.env.HOME || os.homedir();
-  if (!realHome) {
-    checks.push({
-      level: "error",
-      message: "Unable to determine user HOME directory.",
-      code: "missing_home_dir",
-    });
-    return {
-      adapterType: ctx.adapterType,
-      status: "fail",
-      checks,
-      testedAt: new Date().toISOString(),
-    };
-  }
-
-  const accountHome = useIsolatedAccount ? resolveIsolatedAgentHome(agentId) : null;
   const env = {
     ...process.env,
-    HOME: accountHome ?? realHome,
-    PATH: `${path.join(realHome, ".local", "bin")}:${process.env.PATH ?? ""}`,
+    PATH: realHome ? `${path.join(realHome, ".local", "bin")}:${process.env.PATH ?? ""}` : process.env.PATH,
   };
 
   try {
@@ -69,10 +29,9 @@ export async function testEnvironment(
     );
     const output = stdout.trim();
     if (/Authentication required|Not logged in|login required/i.test(output)) {
-      const loginCmd = buildTerminalLoginCommand(agentId, command);
       checks.push({
         level: "error",
-        message: `Antigravity CLI login required for account (${accountHome ?? realHome}). Run: ${loginCmd}`,
+        message: `Antigravity CLI login required. Run: ${command}`,
         code: "adapter_auth_missing",
       });
     } else {
@@ -83,13 +42,14 @@ export async function testEnvironment(
       });
     }
   } catch (err) {
-    const partial = String((err as { stdout?: unknown; stderr?: unknown })?.stdout ?? "") +
-      " " + String((err as { stdout?: unknown; stderr?: unknown })?.stderr ?? "");
+    const partial =
+      String((err as { stdout?: unknown; stderr?: unknown })?.stdout ?? "") +
+      " " +
+      String((err as { stdout?: unknown; stderr?: unknown })?.stderr ?? "");
     if (/Authentication required|Not logged in|login required/i.test(partial)) {
-      const loginCmd = buildTerminalLoginCommand(agentId, command);
       checks.push({
         level: "error",
-        message: `Antigravity CLI login required for account (${accountHome ?? realHome}). Run: ${loginCmd}`,
+        message: `Antigravity CLI login required. Run: ${command}`,
         code: "adapter_auth_missing",
       });
     } else {

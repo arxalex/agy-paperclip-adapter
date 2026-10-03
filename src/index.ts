@@ -9,7 +9,6 @@ export {
   createServerAdapter,
   sessionCodec,
   getConfigSchema,
-  extractAgentIdFromText,
   resolveIsolatedAgentHome,
   buildTerminalLoginCommand,
   buildLoginInstruction,
