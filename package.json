@@ -1,6 +1,6 @@
 {
   "name": "agy-paperclip-adapter",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Google Antigravity (agy) local agent adapter for Paperclip",
   "type": "module",
   "license": "MIT",

@@ -9,6 +9,7 @@ import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
 import { LOGIN_HINT } from "./account.js";
+import { loginCapability } from "./login-capability.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
@@ -164,6 +165,7 @@ export function createServerAdapter(): ServerAdapterModule {
     supportsInstructionsBundle: true,
     instructionsPathKey: "instructionsFilePath",
     supportsLocalAgentJwt: true,
+    loginCapability,
     acp: {
       agentId: "custom",
       skillsMode: "ephemeral",
