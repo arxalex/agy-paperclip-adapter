@@ -9,6 +9,7 @@ import { models, DEFAULT_ANTIGRAVITY_MODEL } from "../models.js";
 import { icon, iconSvg, iconUrl, iconDataUrl, iconBase64 } from "../icon.js";
 import { execute } from "./execute.js";
 import { testEnvironment } from "./test.js";
+import { listModels, refreshModels } from "./model-discovery.js";
 
 export const type = "antigravity";
 export const label = "Antigravity";
@@ -42,12 +43,12 @@ Adapter: antigravity
 
 Use when:
 - You want Paperclip to orchestrate Google Antigravity (agy) local CLI agents.
-- You want model selection across Gemini 3.8 Flash, Gemini 3.7 Flash, Gemini 3.6 Flash, Gemini 3.1 Pro, Claude Sonnet/Opus, or GPT-OSS models.
+- You want model selection across the models your agy install offers (Gemini, Claude Sonnet/Opus, GPT-OSS); the list is read from \`agy models\`.
 - You want to hire multiple local agents with individual instructions and configurable Paperclip skills.
 - You want persistent conversation session state across heartbeats.
 
 Core fields:
-- model (string): Antigravity model ID (e.g. gemini-3.8-flash-high, gemini-3.7-flash-high, claude-sonnet-4-6).
+- model (string): Antigravity model ID as listed by \`agy models\` (e.g. gemini-4-argon-high, gemini-3.8-flash-high, claude-sonnet-5-5-high).
 - effort (string, optional): Reasoning effort (low, medium, high, max).
 - mode (string, optional): accept-edits or plan.
 - command (string, optional): agy binary command path (defaults to "agy").
@@ -56,7 +57,8 @@ Core fields:
 - useIsolatedAccount (boolean, optional): When enabled, runs agy with an isolated agent HOME (~/.paperclip/ai-local-logins/<agent-id>) so each agent has its own Google login.
 `;
 
-export function getConfigSchema(): AdapterConfigSchema {
+export async function getConfigSchema(): Promise<AdapterConfigSchema> {
+  const available = await listModels();
   return {
     fields: [
       {
@@ -64,7 +66,7 @@ export function getConfigSchema(): AdapterConfigSchema {
         label: "Model",
         type: "select" as const,
         default: DEFAULT_ANTIGRAVITY_MODEL,
-        options: models.map((m) => ({ value: m.id, label: m.label })),
+        options: available.map((m) => ({ value: m.id, label: m.label })),
         hint: "Select the AI model for this Antigravity agent.",
       },
       {
@@ -161,6 +163,8 @@ export function createServerAdapter(): ServerAdapterModule {
     testEnvironment,
     sessionCodec,
     models,
+    listModels,
+    refreshModels,
     agentConfigurationDoc,
     getConfigSchema,
     requiresMaterializedRuntimeSkills: true,
